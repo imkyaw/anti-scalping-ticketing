@@ -1,0 +1,20 @@
+{
+  "name": "anti-scalping-ticketing",
+  "version": "0.1.0",
+  "description": "PoC anti-scalping event ticketing with ERC-721 tickets (Hardhat + React)",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "node": "hardhat node",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "frontend": "npm --prefix frontend run dev"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.17"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.6.1"
+  }
+}
