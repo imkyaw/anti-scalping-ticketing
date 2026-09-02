@@ -4,18 +4,22 @@ pragma solidity ^0.8.24;
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 /**
- * @title EventTicketing (Slice 1 — create + buy)
+ * @title EventTicketing (Slice 2 — resale + price cap)
  * @notice One contract holds many events. Tickets are ERC-721 NFTs.
  *
  *   ERC-721 = a standard for "non-fungible" tokens: each ticket has a unique
  *   tokenId, like a unique seat pass, rather than interchangeable coins.
  *
- * This first slice only supports:
- *   - createEvent  (anyone becomes organiser of that event)
- *   - buyTicket    (lazy mint: mint the NFT only when someone pays)
- *   - getEventInfo (read event details; named to avoid clashing with ethers.js)
+ * Supported so far:
+ *   - createEvent / buyTicket / getEventInfo  (Slice 1)
+ *   - listForResale / buyResale / getListing  (Slice 2 — anti-scalping)
  *
- * Resale, validators, and check-in come in later slices.
+ * Anti-scalping idea: a ticket may only be listed at or below its original
+ * face price. The check lives IN the contract, so any marketplace call that
+ * goes through these functions cannot scalp. (Open peer-to-peer transfers
+ * outside this listing flow are a later design choice.)
+ *
+ * Validators / check-in / openSale-closeSale come in later slices.
  */
 contract EventTicketing is ERC721 {
     // ---------------------------------------------------------------
@@ -32,17 +36,29 @@ contract EventTicketing is ERC721 {
         bool saleOpen; // must be true before buyTicket works
     }
 
+    /**
+     * @dev A resale listing on this contract.
+     *      price == 0 means "not listed".
+     */
+    struct Listing {
+        address seller;
+        uint256 price; // wei; must be <= ticketFacePrice when created
+    }
+
     // eventId => EventInfo
     mapping(uint256 => EventInfo) public events;
 
     // tokenId => which event this ticket belongs to
     mapping(uint256 => uint256) public ticketEventId;
 
-    // tokenId => face price remembered on the ticket (needed for later resale cap)
+    // tokenId => face price remembered on the ticket (enforces resale cap)
     mapping(uint256 => uint256) public ticketFacePrice;
 
     // tokenId => whether gate staff has marked it used
     mapping(uint256 => bool) public isUsed;
+
+    // tokenId => active resale listing (if any)
+    mapping(uint256 => Listing) public listings;
 
     // eventId => buyer => how many tickets that buyer already holds for the event
     mapping(uint256 => mapping(address => uint256)) public purchasedCount;
@@ -68,6 +84,19 @@ contract EventTicketing is ERC721 {
     event TicketPurchased(
         uint256 indexed eventId,
         uint256 indexed tokenId,
+        address indexed buyer,
+        uint256 price
+    );
+
+    event TicketListedForResale(
+        uint256 indexed tokenId,
+        address indexed seller,
+        uint256 price
+    );
+
+    event TicketResold(
+        uint256 indexed tokenId,
+        address indexed seller,
         address indexed buyer,
         uint256 price
     );
@@ -166,8 +195,87 @@ contract EventTicketing is ERC721 {
     }
 
     // ---------------------------------------------------------------
+    // Resale (Slice 2) — price capped at face value
+    // ---------------------------------------------------------------
+
+    /**
+     * @notice Owner lists their ticket for resale through THIS contract.
+     *
+     *   Anti-scalping rule (enforced on-chain):
+     *     price MUST be <= the ticket's original face price.
+     *   If someone tries to list above face value, the call REVERTS —
+     *   the whole transaction is undone; nothing is stored.
+     *
+     * @param tokenId The ticket NFT to list
+     * @param price   Asking price in wei (1 ETH = 10^18 wei)
+     */
+    function listForResale(uint256 tokenId, uint256 price) external {
+        require(_ownerOf(tokenId) == msg.sender, "not ticket owner");
+        require(!isUsed[tokenId], "ticket already used");
+        require(price > 0, "price must be > 0");
+        // Core anti-scalping check — cannot list above original face value
+        require(price <= ticketFacePrice[tokenId], "price above face value");
+
+        listings[tokenId] = Listing({seller: msg.sender, price: price});
+
+        emit TicketListedForResale(tokenId, msg.sender, price);
+    }
+
+    /**
+     * @notice Buy a listed ticket at the listed (capped) price.
+     *         Payment is forwarded to the seller; the NFT moves to the buyer.
+     *
+     *   We use the internal _transfer so the seller does not need a separate
+     *   ERC-721 "approve" step — listing on this contract is the consent.
+     */
+    function buyResale(uint256 tokenId) external payable {
+        Listing memory listing = listings[tokenId];
+        require(listing.price > 0, "not listed");
+        require(msg.sender != listing.seller, "seller cannot buy own listing");
+        require(msg.value == listing.price, "incorrect payment");
+        // Seller must still own the ticket (guards against stale listings)
+        require(_ownerOf(tokenId) == listing.seller, "seller no longer owns ticket");
+        require(!isUsed[tokenId], "ticket already used");
+
+        address seller = listing.seller;
+        uint256 price = listing.price;
+
+        // Clear listing BEFORE interactions (checks-effects-interactions pattern)
+        delete listings[tokenId];
+
+        // Move the NFT from seller -> buyer
+        _transfer(seller, msg.sender, tokenId);
+
+        // Forward ETH to the seller
+        (bool ok, ) = payable(seller).call{value: price}("");
+        require(ok, "payment to seller failed");
+
+        emit TicketResold(tokenId, seller, msg.sender, price);
+    }
+
+    /**
+     * @notice Optional helper: cancel your own listing.
+     */
+    function cancelResale(uint256 tokenId) external {
+        Listing memory listing = listings[tokenId];
+        require(listing.price > 0, "not listed");
+        require(listing.seller == msg.sender, "not seller");
+        delete listings[tokenId];
+    }
+
+    // ---------------------------------------------------------------
     // Views
     // ---------------------------------------------------------------
+
+    /**
+     * @notice Read an active resale listing. price == 0 means not listed.
+     */
+    function getListing(
+        uint256 tokenId
+    ) external view returns (address seller, uint256 price) {
+        Listing memory listing = listings[tokenId];
+        return (listing.seller, listing.price);
+    }
 
     /**
      * @notice Read event details. "view" = free to call, does not change state,
