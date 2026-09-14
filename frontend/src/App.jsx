@@ -110,6 +110,28 @@ function App() {
     }
   }
 
+  async function disconnectWallet() {
+    try {
+      setBusy(true);
+
+      // MetaMask supports revoking the site's permission to access accounts.
+      // The user can reconnect later with the same Connect Wallet button.
+      await window.ethereum?.request({
+        method: "wallet_revokePermissions",
+        params: [{ eth_accounts: {} }],
+      });
+    } catch (err) {
+      // Some injected wallets do not implement wallet_revokePermissions.
+      // We still clear this app's in-memory session; no browser storage is used.
+      console.warn("Wallet permission could not be revoked automatically:", err);
+    } finally {
+      setAccount(null);
+      setEventInfo(null);
+      setStatus("Wallet disconnected.");
+      setBusy(false);
+    }
+  }
+
   async function buyTicket() {
     try {
       setBusy(true);
@@ -143,7 +165,11 @@ function App() {
   useEffect(() => {
     if (!window.ethereum) return;
     const onAccounts = (accounts) => {
-      setAccount(accounts[0] ?? null);
+      const selected = accounts[0] ?? null;
+      setAccount(selected);
+      if (!selected) {
+        setEventInfo(null);
+      }
     };
     window.ethereum.on?.("accountsChanged", onAccounts);
     return () => window.ethereum.removeListener?.("accountsChanged", onAccounts);
@@ -155,18 +181,28 @@ function App() {
     <main className="app">
       <header>
         <h1>Anti-Scalping Ticketing</h1>
-        <p className="tagline">Slice 1 — create event + buy ticket (local Hardhat)</p>
+        <p className="tagline">Pre-created events on the local Hardhat network</p>
       </header>
 
       <section className="panel">
-        <h2>1. Connect wallet</h2>
+        <h2>1. Connect Wallet</h2>
         {account ? (
-          <p>
-            Connected as <code>{account}</code>
-          </p>
+          <div className="wallet-session">
+            <p>
+              Connected as <code>{account}</code>
+            </p>
+            <button
+              type="button"
+              className="secondary"
+              onClick={disconnectWallet}
+              disabled={busy}
+            >
+              Disconnect
+            </button>
+          </div>
         ) : (
           <button type="button" onClick={connectWallet} disabled={busy}>
-            Connect MetaMask
+            Connect Wallet
           </button>
         )}
         <p className="hint">

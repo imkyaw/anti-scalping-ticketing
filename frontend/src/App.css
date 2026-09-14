@@ -66,6 +66,26 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.wallet-session {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.wallet-session p {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+button.secondary {
+  flex: 0 0 auto;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+}
+
 .hint {
   margin: 0.75rem 0 0;
   color: var(--muted);
