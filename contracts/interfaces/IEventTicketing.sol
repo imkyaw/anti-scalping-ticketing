@@ -13,6 +13,8 @@ interface IEventTicketing {
         uint256 perWalletCap
     ) external returns (uint256 eventId);
 
+    function openSale(uint256 eventId) external;
+    function closeSale(uint256 eventId) external;
     function buyTicket(uint256 eventId) external payable;
     function listForResale(uint256 tokenId, uint256 price) external;
     function buyResale(uint256 tokenId) external payable;

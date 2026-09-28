@@ -46,6 +46,9 @@ abstract contract TicketingStorage is ERC721 {
         uint256 perWalletCap
     );
 
+    event SaleOpened(uint256 indexed eventId);
+    event SaleClosed(uint256 indexed eventId);
+
     event TicketPurchased(
         uint256 indexed eventId,
         uint256 indexed tokenId,
@@ -70,4 +73,17 @@ abstract contract TicketingStorage is ERC721 {
         string memory tokenName,
         string memory tokenSymbol
     ) ERC721(tokenName, tokenSymbol) {}
+
+    /**
+     * @dev First reject unknown event IDs, then check the event-specific role.
+     * There is intentionally no global organiser/admin role in this project.
+     */
+    modifier onlyEventOrganiser(uint256 eventId) {
+        require(events[eventId].organiser != address(0), "event does not exist");
+        require(
+            events[eventId].organiser == msg.sender,
+            "not event organiser"
+        );
+        _;
+    }
 }

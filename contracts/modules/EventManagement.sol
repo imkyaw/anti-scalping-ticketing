@@ -45,6 +45,26 @@ abstract contract EventManagement is TicketingStorage {
         );
     }
 
+    /**
+     * @notice Open ticket sales. Only this event's organiser may call it.
+     */
+    function openSale(
+        uint256 eventId
+    ) external onlyEventOrganiser(eventId) {
+        events[eventId].saleOpen = true;
+        emit SaleOpened(eventId);
+    }
+
+    /**
+     * @notice Close ticket sales. Existing tickets remain owned and valid.
+     */
+    function closeSale(
+        uint256 eventId
+    ) external onlyEventOrganiser(eventId) {
+        events[eventId].saleOpen = false;
+        emit SaleClosed(eventId);
+    }
+
     function getEventInfo(
         uint256 eventId
     )
