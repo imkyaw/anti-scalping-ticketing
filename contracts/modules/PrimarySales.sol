@@ -37,4 +37,25 @@ abstract contract PrimarySales is TicketingStorage {
 
         emit TicketPurchased(eventId, tokenId, msg.sender, msg.value);
     }
+
+    /**
+     * @notice Return every ticket currently owned by a wallet.
+     * This read-only scan is suitable for the proof-of-concept's small local
+     * dataset and avoids adding another ownership-index storage structure.
+     */
+    function ticketsOf(
+        address account
+    ) external view returns (uint256[] memory tokenIds) {
+        uint256 ownedCount = balanceOf(account);
+        tokenIds = new uint256[](ownedCount);
+        uint256 resultIndex = 0;
+
+        // Token IDs are sequential and start at 1.
+        for (uint256 tokenId = 1; tokenId < nextTokenId; tokenId += 1) {
+            if (_ownerOf(tokenId) == account) {
+                tokenIds[resultIndex] = tokenId;
+                resultIndex += 1;
+            }
+        }
+    }
 }
