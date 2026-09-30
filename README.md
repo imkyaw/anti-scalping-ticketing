@@ -26,7 +26,7 @@ ticketing/
 ├── contracts/          # Solidity
 ├── scripts/            # Deploy scripts
 ├── test/               # Hardhat + Chai tests
-├── frontend/           # Vite React app
+├── ticketing-web/      # Vite React app
 ├── hardhat.config.js
 └── README.md
 ```
@@ -62,7 +62,7 @@ npx hardhat run scripts/deploy.js --network localhost
 ```
 
 This deploys `EventTicketing`, creates demo event **#1** ("Campus Concert" at
-0.01 ETH), and writes `frontend/src/contracts/EventTicketing.json` (address + ABI)
+0.01 ETH), and writes `ticketing-web/src/contracts/EventTicketing.json` (address + ABI)
 for the UI.
 
 **Important:** Every time you restart Terminal A (`hardhat node`), the chain
@@ -71,7 +71,7 @@ resets — run the deploy script again.
 ### Terminal C — start the frontend
 
 ```bash
-cd frontend
+cd ticketing-web
 npm install
 npm run dev
 ```
