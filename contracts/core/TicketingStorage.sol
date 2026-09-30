@@ -32,9 +32,14 @@ abstract contract TicketingStorage is ERC721 {
     mapping(uint256 => bool) public isUsed;
     mapping(uint256 => Listing) public listings;
     mapping(uint256 => mapping(address => uint256)) public purchasedCount;
+    // eventId => wallet => whether the wallet may validate that event
+    mapping(uint256 => mapping(address => bool)) public validators;
 
     uint256 public nextEventId = 1;
     uint256 public nextTokenId = 1;
+
+    // True only while ResaleMarket performs an approved capped-price transfer.
+    bool private _resaleTransferInProgress;
 
     // Solidity events are blockchain logs that the frontend can observe.
     event EventCreated(
@@ -69,6 +74,19 @@ abstract contract TicketingStorage is ERC721 {
         uint256 price
     );
 
+    event ValidatorGranted(
+        uint256 indexed eventId,
+        address indexed validator,
+        address indexed organiser
+    );
+
+    event TicketUsed(
+        uint256 indexed tokenId,
+        uint256 indexed eventId,
+        address indexed validator,
+        address ticketOwner
+    );
+
     constructor(
         string memory tokenName,
         string memory tokenSymbol
@@ -85,5 +103,42 @@ abstract contract TicketingStorage is ERC721 {
             "not event organiser"
         );
         _;
+    }
+
+    /**
+     * @dev Move an existing ticket through the contract-approved resale path.
+     */
+    function _transferThroughResale(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal {
+        _resaleTransferInProgress = true;
+        _transfer(from, to, tokenId);
+        _resaleTransferInProgress = false;
+    }
+
+    /**
+     * @dev Every OpenZeppelin ERC-721 ownership change passes through _update.
+     * Minting is allowed, but an existing ticket can move only through the
+     * capped resale flow. This prevents transferFrom marketplace bypasses.
+     */
+    function _update(
+        address to,
+        uint256 tokenId,
+        address auth
+    ) internal virtual override returns (address previousOwner) {
+        address from = _ownerOf(tokenId);
+        bool transfersExistingTicket =
+            from != address(0) && to != address(0);
+
+        if (transfersExistingTicket) {
+            require(
+                _resaleTransferInProgress,
+                "ticket transfers must use resale"
+            );
+        }
+
+        return super._update(to, tokenId, auth);
     }
 }

@@ -33,7 +33,7 @@ abstract contract ResaleMarket is TicketingStorage {
         uint256 price = listing.price;
 
         delete listings[tokenId];
-        _transfer(seller, msg.sender, tokenId);
+        _transferThroughResale(seller, msg.sender, tokenId);
 
         (bool paymentSent, ) = payable(seller).call{value: price}("");
         require(paymentSent, "payment to seller failed");
