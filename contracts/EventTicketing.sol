@@ -5,6 +5,7 @@ import {TicketingStorage} from "./core/TicketingStorage.sol";
 import {EventManagement} from "./modules/EventManagement.sol";
 import {PrimarySales} from "./modules/PrimarySales.sol";
 import {ResaleMarket} from "./modules/ResaleMarket.sol";
+import {TicketValidation} from "./modules/TicketValidation.sol";
 
 /**
  * @title EventTicketing
@@ -14,6 +15,11 @@ import {ResaleMarket} from "./modules/ResaleMarket.sol";
  * one shared state. The split only improves team ownership of source files;
  * it does not change the deployed architecture or existing behavior.
  */
-contract EventTicketing is EventManagement, PrimarySales, ResaleMarket {
+contract EventTicketing is
+    EventManagement,
+    PrimarySales,
+    ResaleMarket,
+    TicketValidation
+{
     constructor() TicketingStorage("EventTicket", "TIX") {}
 }
