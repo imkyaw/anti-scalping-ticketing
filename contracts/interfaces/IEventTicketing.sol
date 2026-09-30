@@ -16,9 +16,19 @@ interface IEventTicketing {
     function openSale(uint256 eventId) external;
     function closeSale(uint256 eventId) external;
     function buyTicket(uint256 eventId) external payable;
+    function ticketsOf(
+        address account
+    ) external view returns (uint256[] memory tokenIds);
     function listForResale(uint256 tokenId, uint256 price) external;
     function buyResale(uint256 tokenId) external payable;
     function cancelResale(uint256 tokenId) external;
+    function grantValidator(uint256 eventId, address validator) external;
+    function markUsed(uint256 tokenId) external;
+
+    function isValidator(
+        uint256 eventId,
+        address account
+    ) external view returns (bool);
 
     function getListing(
         uint256 tokenId
