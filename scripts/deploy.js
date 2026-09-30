@@ -37,7 +37,7 @@ async function main() {
   // ABI = Application Binary Interface: the "menu" of functions the contract exposes,
   // so ethers.js knows how to encode/decode calls.
   const artifact = await hre.artifacts.readArtifact("EventTicketing");
-  const outDir = path.join(__dirname, "..", "frontend", "src", "contracts");
+  const outDir = path.join(__dirname, "..", "ticketing-web", "src", "contracts");
   fs.mkdirSync(outDir, { recursive: true });
 
   const deployment = {
@@ -50,7 +50,7 @@ async function main() {
     path.join(outDir, "EventTicketing.json"),
     JSON.stringify(deployment, null, 2)
   );
-  console.log("Wrote frontend/src/contracts/EventTicketing.json");
+  console.log("Wrote ticketing-web/src/contracts/EventTicketing.json");
 }
 
 main().catch((error) => {
