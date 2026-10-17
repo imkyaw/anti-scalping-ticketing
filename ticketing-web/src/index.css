@@ -1,111 +1,135 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import 'tailwindcss';
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/* Design tokens from ui_template/stitch/cryptographic_trust_live_access/DESIGN.md */
+@theme {
+  --color-canvas: #090d16;
+  --color-surface: #111827;
+  --color-surface-low: #0d1320;
+  --color-surface-high: #1a2232;
+  --color-line: #1f2937;
+  --color-line-strong: #374151;
+  --color-ink: #f9fafb;
+  --color-muted: #9ca3af;
+  --color-subtle: #6b7280;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --color-primary: #6366f1;
+  --color-primary-strong: #4f46e5;
+  --color-primary-soft: #c0c1ff;
+  --color-success: #10b981;
+  --color-success-soft: #4edea3;
+  --color-danger: #ef4444;
+  --color-danger-soft: #ffb4ab;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #ffb95f;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+    --glass-border: rgb(255 255 255 / 0.08);
+    --glass-shadow: 0 8px 32px -4px rgb(0 0 0 / 0.5);
   }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  /* Light mode: same token names, so every Tailwind utility switches automatically. */
+  :root[data-theme='light'] {
+    color-scheme: light;
+    --color-canvas: #f5f7fb;
+    --color-surface: #ffffff;
+    --color-surface-low: #eef1f7;
+    --color-surface-high: #e5e9f2;
+    --color-line: #e2e8f0;
+    --color-line-strong: #cbd5e1;
+    --color-ink: #0f172a;
+    --color-muted: #475569;
+    --color-subtle: #64748b;
+
+    /* "-soft" tones are text colours, so they darken for contrast on light surfaces. */
+    --color-primary-soft: #4338ca;
+    --color-success-soft: #047857;
+    --color-danger-soft: #b91c1c;
+    --color-warning-soft: #b45309;
+
+    --glass-border: var(--color-line);
+    --glass-shadow: 0 8px 24px -8px rgb(15 23 42 / 0.12);
+  }
+
+  html {
+    color-scheme: dark;
+    background-color: var(--color-canvas);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-canvas);
+    background-image:
+      radial-gradient(60rem 30rem at 85% -10%, rgb(99 102 241 / 0.12), transparent 70%),
+      radial-gradient(40rem 24rem at -10% 30%, rgb(16 185 129 / 0.06), transparent 70%);
+    background-attachment: fixed;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
   }
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+/* Level 1 — structural panels */
+@utility glass-panel {
+  background-color: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-line);
+  border-radius: 1rem;
 }
 
-body {
-  margin: 0;
+/* Level 2 — interactive cards and ticket passes */
+@utility glass-card {
+  background-color: color-mix(in srgb, var(--color-surface) 85%, transparent);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 1rem;
+  box-shadow: var(--glass-shadow);
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+@utility label-caps {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+/* Perforated divider with inward ticket notches */
+@utility ticket-divider {
+  position: relative;
+  border-top: 1px dashed var(--color-line-strong);
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: -0.75rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    background-color: var(--color-canvas);
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+
+  &::before {
+    left: -0.75rem;
   }
-}
-p {
-  margin: 0;
-}
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  &::after {
+    right: -0.75rem;
+  }
 }
